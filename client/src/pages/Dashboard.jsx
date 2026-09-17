@@ -13,7 +13,7 @@ import { useNavigate } from "react-router-dom";
 import Layout from "../components/Layout";
 import Chart from "../components/Chart";
 import ProjectTable from "../components/ProjectTable";
-import { getDashboardSummary } from "../services/api";
+import { getDashboardSummary, deleteProject } from "../services/api";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -56,6 +56,39 @@ export default function Dashboard() {
     loadDashboard(numericYear);
   };
 
+  // EDIT PROJECT
+  const handleEditProject = (project) => {
+    if (!project?._id) return;
+
+    navigate(`/projects?edit=${project._id}`);
+  };
+
+  // DELETE PROJECT
+  const handleDeleteProject = async (project) => {
+    if (!project?._id) return;
+
+    const confirmed = window.confirm(
+      `Are you sure you want to delete "${project.title}"?`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      await deleteProject(project._id);
+
+      // Refresh dashboard after successful delete
+      await loadDashboard(selectedYear);
+    } catch (err) {
+      console.error("Delete project error:", err);
+
+      setError(
+        err?.response?.data?.message ||
+          err?.message ||
+          "Failed to delete project"
+      );
+    }
+  };
+
   const stats = dashboard?.stats || {};
   const recentProjects = dashboard?.recentProjects || [];
   const chartData = dashboard?.chartData || [];
@@ -73,7 +106,13 @@ export default function Dashboard() {
     const completedScore = completedProjects / totalProjects;
     const overduePenalty = overdueProjects / totalProjects;
 
-    return Math.max(0, Math.min(100, Math.round(completedScore * 100 - overduePenalty * 30)));
+    return Math.max(
+      0,
+      Math.min(
+        100,
+        Math.round(completedScore * 100 - overduePenalty * 30)
+      )
+    );
   }, [totalProjects, completedProjects, overdueProjects]);
 
   const statusData = useMemo(() => {
@@ -105,9 +144,15 @@ export default function Dashboard() {
 
     return {
       todo: Math.round((statusData.todo / totalProjects) * 100),
-      inProgress: Math.round((statusData.in_progress / totalProjects) * 100),
-      completed: Math.round((statusData.completed / totalProjects) * 100),
-      overdue: Math.round((statusData.overdue / totalProjects) * 100),
+      inProgress: Math.round(
+        (statusData.in_progress / totalProjects) * 100
+      ),
+      completed: Math.round(
+        (statusData.completed / totalProjects) * 100
+      ),
+      overdue: Math.round(
+        (statusData.overdue / totalProjects) * 100
+      ),
     };
   }, [statusData, totalProjects]);
 
@@ -156,7 +201,11 @@ export default function Dashboard() {
           </p>
         </div>
 
-        <button type="button" onClick={() => navigate("/projects")} className="hidden rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-violet-200 transition hover:bg-violet-700 dark:shadow-violet-950/40 sm:block">
+        <button
+          type="button"
+          onClick={() => navigate("/projects")}
+          className="hidden rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-violet-200 transition hover:bg-violet-700 dark:shadow-violet-950/40 sm:block"
+        >
           + New Project
         </button>
       </section>
@@ -168,7 +217,11 @@ export default function Dashboard() {
       )}
 
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
-        <button type="button" onClick={() => navigate("/projects")} className="rounded-[20px] border border-gray-200 bg-white/80 p-4 text-left shadow-sm backdrop-blur-xl transition hover:-translate-y-0.5 hover:shadow-lg dark:border-slate-700 dark:bg-slate-900/80">
+        <button
+          type="button"
+          onClick={() => navigate("/projects")}
+          className="rounded-[20px] border border-gray-200 bg-white/80 p-4 text-left shadow-sm backdrop-blur-xl transition hover:-translate-y-0.5 hover:shadow-lg dark:border-slate-700 dark:bg-slate-900/80"
+        >
           <div className="flex items-center gap-2">
             <TrendingUp size={17} className="text-emerald-500" />
             <span className="text-sm font-medium text-gray-900 dark:text-white">
@@ -192,7 +245,11 @@ export default function Dashboard() {
           </div>
         </button>
 
-        <button type="button" onClick={() => navigate("/projects")} className="rounded-[20px] border border-gray-200 bg-white/80 p-4 text-left shadow-sm backdrop-blur-xl transition hover:-translate-y-0.5 hover:shadow-lg dark:border-slate-700 dark:bg-slate-900/80">
+        <button
+          type="button"
+          onClick={() => navigate("/projects")}
+          className="rounded-[20px] border border-gray-200 bg-white/80 p-4 text-left shadow-sm backdrop-blur-xl transition hover:-translate-y-0.5 hover:shadow-lg dark:border-slate-700 dark:bg-slate-900/80"
+        >
           <div className="flex items-center gap-2">
             <TrendingUp size={17} className="text-emerald-500" />
             <span className="text-sm font-medium text-gray-900 dark:text-white">
@@ -216,7 +273,11 @@ export default function Dashboard() {
           </div>
         </button>
 
-        <button type="button" onClick={() => navigate("/projects")} className="rounded-[20px] border border-gray-200 bg-white/80 p-4 text-left shadow-sm backdrop-blur-xl transition hover:-translate-y-0.5 hover:shadow-lg dark:border-slate-700 dark:bg-slate-900/80">
+        <button
+          type="button"
+          onClick={() => navigate("/projects")}
+          className="rounded-[20px] border border-gray-200 bg-white/80 p-4 text-left shadow-sm backdrop-blur-xl transition hover:-translate-y-0.5 hover:shadow-lg dark:border-slate-700 dark:bg-slate-900/80"
+        >
           <div className="flex items-center gap-2">
             <TrendingUp size={17} className="text-emerald-500" />
             <span className="text-sm font-medium text-gray-900 dark:text-white">
@@ -240,7 +301,11 @@ export default function Dashboard() {
           </div>
         </button>
 
-        <button type="button" onClick={() => navigate("/projects")} className="rounded-[20px] border border-gray-200 bg-white/80 p-4 text-left shadow-sm backdrop-blur-xl transition hover:-translate-y-0.5 hover:shadow-lg dark:border-slate-700 dark:bg-slate-900/80">
+        <button
+          type="button"
+          onClick={() => navigate("/projects")}
+          className="rounded-[20px] border border-gray-200 bg-white/80 p-4 text-left shadow-sm backdrop-blur-xl transition hover:-translate-y-0.5 hover:shadow-lg dark:border-slate-700 dark:bg-slate-900/80"
+        >
           <div className="flex items-center gap-2">
             <TrendingDown size={17} className="text-red-500" />
             <span className="text-sm font-medium text-gray-900 dark:text-white">
@@ -264,7 +329,11 @@ export default function Dashboard() {
           </div>
         </button>
 
-        <button type="button" onClick={() => navigate("/analytics")} className="rounded-[20px] border border-gray-200 bg-white/80 p-4 text-left shadow-sm backdrop-blur-xl transition hover:-translate-y-0.5 hover:shadow-lg dark:border-slate-700 dark:bg-slate-900/80">
+        <button
+          type="button"
+          onClick={() => navigate("/analytics")}
+          className="rounded-[20px] border border-gray-200 bg-white/80 p-4 text-left shadow-sm backdrop-blur-xl transition hover:-translate-y-0.5 hover:shadow-lg dark:border-slate-700 dark:bg-slate-900/80"
+        >
           <div className="flex items-center gap-2">
             <TrendingUp size={17} className="text-emerald-500" />
             <span className="text-sm font-medium text-gray-900 dark:text-white">
@@ -291,7 +360,13 @@ export default function Dashboard() {
 
       <section className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(340px,1fr)]">
         <div className="min-w-0">
-          <Chart data={chartData} availableYears={availableYears} selectedYear={selectedYear} onYearChange={handleYearChange} loading={loading} />
+          <Chart
+            data={chartData}
+            availableYears={availableYears}
+            selectedYear={selectedYear}
+            onYearChange={handleYearChange}
+            loading={loading}
+          />
         </div>
 
         <div className="rounded-[20px] border border-gray-200 bg-white/80 p-4 shadow-sm backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/80 sm:p-5">
@@ -306,7 +381,10 @@ export default function Dashboard() {
 
           <div className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
             <div className="flex items-center gap-2">
-              <AlertTriangle size={17} className="text-yellow-500 dark:text-yellow-400" />
+              <AlertTriangle
+                size={17}
+                className="text-yellow-500 dark:text-yellow-400"
+              />
               <span className="text-sm font-semibold text-gray-900 dark:text-white">
                 High Risk
               </span>
@@ -320,7 +398,11 @@ export default function Dashboard() {
               </p>
             </div>
 
-            <button type="button" onClick={() => navigate("/projects")} className="mt-4 flex w-full items-center justify-between text-xs font-medium text-gray-700 transition hover:text-gray-950 dark:text-gray-300 dark:hover:text-white">
+            <button
+              type="button"
+              onClick={() => navigate("/projects")}
+              className="mt-4 flex w-full items-center justify-between text-xs font-medium text-gray-700 transition hover:text-gray-950 dark:text-gray-300 dark:hover:text-white"
+            >
               View Projects
               <ArrowRight size={15} />
             </button>
@@ -328,7 +410,10 @@ export default function Dashboard() {
 
           <div className="mt-4 rounded-2xl border border-gray-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
             <div className="flex items-center gap-2">
-              <Lightbulb size={17} className="text-yellow-500 dark:text-yellow-400" />
+              <Lightbulb
+                size={17}
+                className="text-yellow-500 dark:text-yellow-400"
+              />
               <span className="text-sm font-semibold text-gray-900 dark:text-white">
                 Forecast
               </span>
@@ -342,7 +427,11 @@ export default function Dashboard() {
               </p>
             </div>
 
-            <button type="button" onClick={() => navigate("/analytics")} className="mt-4 flex w-full items-center justify-between text-xs font-medium text-gray-700 transition hover:text-gray-950 dark:text-gray-300 dark:hover:text-white">
+            <button
+              type="button"
+              onClick={() => navigate("/analytics")}
+              className="mt-4 flex w-full items-center justify-between text-xs font-medium text-gray-700 transition hover:text-gray-950 dark:text-gray-300 dark:hover:text-white"
+            >
               Open Analytics
               <ArrowRight size={15} />
             </button>
@@ -355,12 +444,16 @@ export default function Dashboard() {
           <h2 className="text-base font-semibold text-gray-900 dark:text-white">
             Project Status
           </h2>
+
           <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
             Distribution by project status
           </p>
 
           <div className="mt-5 flex items-center gap-6">
-            <div className="relative h-28 w-28 shrink-0 rounded-full" style={donutStyle}>
+            <div
+              className="relative h-28 w-28 shrink-0 rounded-full"
+              style={donutStyle}
+            >
               <div className="absolute inset-[26px] flex items-center justify-center rounded-full bg-white dark:bg-slate-900">
                 <span className="text-xs font-bold text-gray-900 dark:text-white">
                   {totalProjects}
@@ -374,9 +467,7 @@ export default function Dashboard() {
                   <i className="h-2.5 w-2.5 rounded-full bg-violet-300" />
                   To Do
                 </span>
-                <b className="text-gray-900 dark:text-white">
-                  {statusPercentages.todo}%
-                </b>
+                <b>{statusPercentages.todo}%</b>
               </div>
 
               <div className="flex items-center justify-between">
@@ -384,9 +475,7 @@ export default function Dashboard() {
                   <i className="h-2.5 w-2.5 rounded-full bg-violet-500" />
                   In Progress
                 </span>
-                <b className="text-gray-900 dark:text-white">
-                  {statusPercentages.inProgress}%
-                </b>
+                <b>{statusPercentages.inProgress}%</b>
               </div>
 
               <div className="flex items-center justify-between">
@@ -394,9 +483,7 @@ export default function Dashboard() {
                   <i className="h-2.5 w-2.5 rounded-full bg-violet-700" />
                   Completed
                 </span>
-                <b className="text-gray-900 dark:text-white">
-                  {statusPercentages.completed}%
-                </b>
+                <b>{statusPercentages.completed}%</b>
               </div>
 
               <div className="flex items-center justify-between">
@@ -404,9 +491,7 @@ export default function Dashboard() {
                   <i className="h-2.5 w-2.5 rounded-full bg-red-500" />
                   Overdue
                 </span>
-                <b className="text-gray-900 dark:text-white">
-                  {statusPercentages.overdue}%
-                </b>
+                <b>{statusPercentages.overdue}%</b>
               </div>
             </div>
           </div>
@@ -422,6 +507,7 @@ export default function Dashboard() {
           <h2 className="text-base font-semibold text-gray-900 dark:text-white">
             Project Progress
           </h2>
+
           <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
             Recent projects and estimated progress
           </p>
@@ -435,18 +521,27 @@ export default function Dashboard() {
               </>
             ) : progressProjects.length > 0 ? (
               progressProjects.map((project) => (
-                <button key={project._id} type="button" onClick={() => navigate("/projects")} className="block w-full text-left">
+                <button
+                  key={project._id}
+                  type="button"
+                  onClick={() => navigate("/projects")}
+                  className="block w-full text-left"
+                >
                   <div className="mb-1 flex justify-between text-xs">
                     <span className="font-medium text-gray-800 dark:text-gray-200">
                       {project.title}
                     </span>
+
                     <span className="font-semibold text-gray-900 dark:text-white">
                       {project.progress}%
                     </span>
                   </div>
 
                   <div className="h-2 overflow-hidden rounded-full bg-gray-200 dark:bg-slate-700">
-                    <div className="h-full rounded-full bg-violet-600 transition-all dark:bg-violet-400" style={{ width: `${project.progress}%` }} />
+                    <div
+                      className="h-full rounded-full bg-violet-600 transition-all dark:bg-violet-400"
+                      style={{ width: `${project.progress}%` }}
+                    />
                   </div>
                 </button>
               ))
@@ -466,6 +561,7 @@ export default function Dashboard() {
           <h2 className="text-base font-semibold text-gray-900 dark:text-white">
             Workspace Summary
           </h2>
+
           <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
             Current project workspace performance
           </p>
@@ -474,13 +570,17 @@ export default function Dashboard() {
             <div className="text-4xl font-bold text-gray-950 dark:text-white">
               {projectHealth}
             </div>
+
             <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
               Health Score
             </p>
           </div>
 
           <div className="mt-5 h-3 overflow-hidden rounded-full bg-gray-200 dark:bg-slate-700">
-            <div className="h-full rounded-full bg-emerald-500 transition-all" style={{ width: `${projectHealth}%` }} />
+            <div
+              className="h-full rounded-full bg-emerald-500 transition-all"
+              style={{ width: `${projectHealth}%` }}
+            />
           </div>
 
           <div className="mt-5 grid grid-cols-2 gap-3 text-xs">
@@ -506,9 +606,17 @@ export default function Dashboard() {
       </section>
 
       <section className="mt-4 grid gap-4 lg:grid-cols-3">
-        <button type="button" onClick={() => navigate("/analytics")} className="rounded-[20px] border border-gray-200 bg-gradient-to-br from-violet-50 to-purple-100 p-5 text-left transition hover:-translate-y-0.5 hover:shadow-lg dark:border-slate-700 dark:from-violet-950/40 dark:to-slate-900">
+        <button
+          type="button"
+          onClick={() => navigate("/analytics")}
+          className="rounded-[20px] border border-gray-200 bg-gradient-to-br from-violet-50 to-purple-100 p-5 text-left transition hover:-translate-y-0.5 hover:shadow-lg dark:border-slate-700 dark:from-violet-950/40 dark:to-slate-900"
+        >
           <div className="flex items-center gap-2">
-            <BarChart3 size={18} className="text-violet-600 dark:text-violet-400" />
+            <BarChart3
+              size={18}
+              className="text-violet-600 dark:text-violet-400"
+            />
+
             <h2 className="text-base font-semibold text-gray-900 dark:text-white">
               Project Analytics
             </h2>
@@ -519,20 +627,41 @@ export default function Dashboard() {
           </p>
 
           <div className="mt-5 flex items-end gap-2">
-            {[statusData.todo, statusData.in_progress, statusData.completed, statusData.overdue].map((value, index) => {
-              const maxValue = Math.max(...Object.values(statusData), 1);
+            {[
+              statusData.todo,
+              statusData.in_progress,
+              statusData.completed,
+              statusData.overdue,
+            ].map((value, index) => {
+              const maxValue = Math.max(
+                ...Object.values(statusData),
+                1
+              );
+
               const height = Math.max(15, (value / maxValue) * 85);
 
               return (
-                <div key={index} className="flex-1 rounded-t-md bg-violet-500 dark:bg-violet-400" style={{ height: `${height}px` }} />
+                <div
+                  key={index}
+                  className="flex-1 rounded-t-md bg-violet-500 dark:bg-violet-400"
+                  style={{ height: `${height}px` }}
+                />
               );
             })}
           </div>
         </button>
 
-        <button type="button" onClick={() => navigate("/projects")} className="rounded-[20px] border border-gray-200 bg-gradient-to-br from-blue-50 to-cyan-100 p-5 text-left transition hover:-translate-y-0.5 hover:shadow-lg dark:border-slate-700 dark:from-blue-950/40 dark:to-slate-900">
+        <button
+          type="button"
+          onClick={() => navigate("/projects")}
+          className="rounded-[20px] border border-gray-200 bg-gradient-to-br from-blue-50 to-cyan-100 p-5 text-left transition hover:-translate-y-0.5 hover:shadow-lg dark:border-slate-700 dark:from-blue-950/40 dark:to-slate-900"
+        >
           <div className="flex items-center gap-2">
-            <Users size={18} className="text-blue-600 dark:text-blue-400" />
+            <Users
+              size={18}
+              className="text-blue-600 dark:text-blue-400"
+            />
+
             <h2 className="text-base font-semibold text-gray-900 dark:text-white">
               Workspace Activity
             </h2>
@@ -547,20 +676,41 @@ export default function Dashboard() {
               <span className="text-sm text-gray-700 dark:text-gray-300">
                 Active projects
               </span>
+
               <span className="text-xl font-bold text-gray-900 dark:text-white">
                 {activeProjects}
               </span>
             </div>
 
             <div className="mt-3 h-2 rounded-full bg-blue-100 dark:bg-slate-700">
-              <div className="h-2 rounded-full bg-blue-500 transition-all dark:bg-blue-400" style={{ width: `${totalProjects ? Math.min(100, (activeProjects / totalProjects) * 100) : 0}%` }} />
+              <div
+                className="h-2 rounded-full bg-blue-500 transition-all dark:bg-blue-400"
+                style={{
+                  width: `${
+                    totalProjects
+                      ? Math.min(
+                          100,
+                          (activeProjects / totalProjects) * 100
+                        )
+                      : 0
+                  }%`,
+                }}
+              />
             </div>
           </div>
         </button>
 
-        <button type="button" onClick={() => navigate("/analytics")} className="rounded-[20px] border border-gray-200 bg-gradient-to-br from-emerald-50 to-green-100 p-5 text-left transition hover:-translate-y-0.5 hover:shadow-lg dark:border-slate-700 dark:from-emerald-950/40 dark:to-slate-900">
+        <button
+          type="button"
+          onClick={() => navigate("/analytics")}
+          className="rounded-[20px] border border-gray-200 bg-gradient-to-br from-emerald-50 to-green-100 p-5 text-left transition hover:-translate-y-0.5 hover:shadow-lg dark:border-slate-700 dark:from-emerald-950/40 dark:to-slate-900"
+        >
           <div className="flex items-center gap-2">
-            <TrendingUp size={18} className="text-emerald-600 dark:text-emerald-400" />
+            <TrendingUp
+              size={18}
+              className="text-emerald-600 dark:text-emerald-400"
+            />
+
             <h2 className="text-base font-semibold text-gray-900 dark:text-white">
               Delivery Forecast
             </h2>
@@ -574,6 +724,7 @@ export default function Dashboard() {
             <span className="text-3xl font-bold text-gray-950 dark:text-white">
               {projectHealth}%
             </span>
+
             <span className="ml-2 rounded-full bg-emerald-500 px-2 py-1 text-[10px] font-bold text-white">
               Live
             </span>
@@ -587,17 +738,29 @@ export default function Dashboard() {
             <h2 className="text-base font-semibold text-gray-900 dark:text-white">
               Recent Projects
             </h2>
+
             <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
               Recently updated projects
             </p>
           </div>
 
-          <button type="button" onClick={() => navigate("/projects")} className="text-xs font-semibold text-violet-600 transition hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300">
+          {/* VIEW ALL */}
+          <button
+            type="button"
+            onClick={() => navigate("/projects")}
+            className="text-xs font-semibold text-violet-600 transition hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300"
+          >
             View all
           </button>
         </div>
 
-        <ProjectTable projects={recentProjects} loading={loading} error={error} />
+        <ProjectTable
+          projects={recentProjects}
+          loading={loading}
+          error={error}
+          onEdit={handleEditProject}
+          onDelete={handleDeleteProject}
+        />
       </section>
     </Layout>
   );

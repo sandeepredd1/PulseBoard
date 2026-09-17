@@ -3,8 +3,10 @@ import {
   Navigate,
   Route,
   Routes,
+  useLocation,
 } from "react-router-dom";
 
+import { useAuth } from "./context/AuthContext";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 
@@ -23,105 +25,156 @@ import Integrations from "./pages/Integrations";
 import Support from "./pages/Support";
 import AIInsights from "./pages/AIInsights";
 import Profile from "./pages/Profile";
+import { canAccessRoute } from "./utils/routeAccess";
+
+function ProtectedRoute({ children }) {
+  const { isAuthenticated, loading } = useAuth();
+  const location = useLocation();
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-950 text-sm text-slate-200">
+        Checking your session...
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <Navigate
+        to="/login"
+        replace
+        state={{ from: location.pathname }}
+      />
+    );
+  }
+
+  return children;
+}
+
+function PublicRoute({ children }) {
+  const { isAuthenticated, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-950 text-sm text-slate-200">
+        Loading your workspace...
+      </div>
+    );
+  }
+
+  if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return children;
+}
+
+function RedirectHome() {
+  const { isAuthenticated } = useAuth();
+
+  return (
+    <Navigate
+      to={isAuthenticated ? "/dashboard" : "/login"}
+      replace
+    />
+  );
+}
 
 function AppRoutes() {
+  const { isAuthenticated } = useAuth();
+
   return (
     <Routes>
-
       {/* Authentication */}
       <Route
         path="/login"
-        element={<Login />}
+        element={<PublicRoute><Login /></PublicRoute>}
       />
 
       <Route
         path="/register"
-        element={<Signup />}
+        element={<PublicRoute><Signup /></PublicRoute>}
       />
 
       <Route
         path="/signup"
-        element={<Signup />}
+        element={<PublicRoute><Signup /></PublicRoute>}
       />
 
       <Route
         path="/forgot-password"
-        element={<ForgotPassword />}
+        element={<PublicRoute><ForgotPassword /></PublicRoute>}
       />
 
       <Route
         path="/verify-otp"
-        element={<VerifyOTP />}
+        element={<PublicRoute><VerifyOTP /></PublicRoute>}
       />
 
       <Route
         path="/reset-password"
-        element={<ResetPassword />}
+        element={<PublicRoute><ResetPassword /></PublicRoute>}
       />
 
       {/* Main Dashboard */}
       <Route
         path="/dashboard"
-        element={<Dashboard />}
+        element={<ProtectedRoute><Dashboard /></ProtectedRoute>}
       />
 
       {/* Projects */}
       <Route
         path="/projects"
-        element={<Projects />}
+        element={<ProtectedRoute><Projects /></ProtectedRoute>}
       />
 
       {/* Analytics */}
       <Route
         path="/analytics"
-        element={<Analytics />}
+        element={<ProtectedRoute><Analytics /></ProtectedRoute>}
       />
 
       {/* Customers */}
       <Route
         path="/customers"
-        element={<Customers />}
+        element={<ProtectedRoute><Customers /></ProtectedRoute>}
       />
 
       {/* Settings */}
       <Route
         path="/settings"
-        element={<Settings />}
+        element={<ProtectedRoute><Settings /></ProtectedRoute>}
       />
 
       {/* Integrations */}
       <Route
         path="/integrations"
-        element={<Integrations />}
+        element={<ProtectedRoute><Integrations /></ProtectedRoute>}
       />
 
       {/* Support */}
       <Route
         path="/support"
-        element={<Support />}
+        element={<ProtectedRoute><Support /></ProtectedRoute>}
       />
 
       {/* AI Insights */}
       <Route
         path="/ai-insights"
-        element={<AIInsights />}
+        element={<ProtectedRoute><AIInsights /></ProtectedRoute>}
       />
 
       {/* Profile */}
       <Route
         path="/profile"
-        element={<Profile />}
+        element={<ProtectedRoute><Profile /></ProtectedRoute>}
       />
 
       {/* Default */}
       <Route
         path="/"
-        element={
-          <Navigate
-            to="/dashboard"
-            replace
-          />
-        }
+        element={<RedirectHome />}
       />
 
       {/* Unknown routes */}
@@ -129,7 +182,7 @@ function AppRoutes() {
         path="*"
         element={
           <Navigate
-            to="/dashboard"
+            to={canAccessRoute({ isAuthenticated, path: "/dashboard" }) ? "/dashboard" : "/login"}
             replace
           />
         }
