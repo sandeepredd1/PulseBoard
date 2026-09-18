@@ -1,21 +1,68 @@
 const API_URL = import.meta.env.VITE_API_URL || "/api";
 
+/* =========================
+   TOKEN HELPERS
+========================= */
+
+const getToken = () => {
+  return (
+    localStorage.getItem("token") ||
+    localStorage.getItem("accessToken") ||
+    localStorage.getItem("authToken") ||
+    null
+  );
+};
+
+const saveToken = (data) => {
+  const token =
+    data?.token ||
+    data?.accessToken ||
+    data?.data?.token ||
+    data?.data?.accessToken ||
+    null;
+
+  if (token) {
+    localStorage.setItem("token", token);
+  }
+
+  return token;
+};
+
+const clearToken = () => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("accessToken");
+  localStorage.removeItem("authToken");
+};
+
+/* =========================
+   API REQUEST
+========================= */
+
 async function request(endpoint, options = {}) {
   const isFormData =
     typeof FormData !== "undefined" && options.body instanceof FormData;
+
+  const token = getToken();
+
+  const headers = {
+    ...(isFormData
+      ? {}
+      : {
+          "Content-Type": "application/json",
+        }),
+    ...(token
+      ? {
+          Authorization: `Bearer ${token}`,
+        }
+      : {}),
+    ...(options.headers || {}),
+  };
 
   try {
     const response = await fetch(`${API_URL}${endpoint}`, {
       ...options,
       credentials: "include",
-      headers: {
-        ...(isFormData
-          ? {}
-          : {
-              "Content-Type": "application/json",
-            }),
-        ...(options.headers || {}),
-      },
+      headers,
     });
 
     let data = {};
@@ -53,7 +100,7 @@ async function request(endpoint, options = {}) {
 
     throw error;
   }
-};
+}
 
 /* =========================
    AUTH
@@ -65,16 +112,31 @@ export const registerUser = (userData) =>
     body: JSON.stringify(userData),
   });
 
-export const loginUser = (credentials) =>
-  request("/auth/login", {
+export const loginUser = async (credentials) => {
+  const data = await request("/auth/login", {
     method: "POST",
     body: JSON.stringify(credentials),
   });
 
-export const logoutUser = () =>
-  request("/auth/logout", {
-    method: "POST",
-  });
+  saveToken(data);
+
+  return data;
+};
+
+export const logoutUser = async () => {
+  try {
+    const data = await request("/auth/logout", {
+      method: "POST",
+    });
+
+    clearToken();
+
+    return data;
+  } catch (error) {
+    clearToken();
+    throw error;
+  }
+};
 
 export const forgotPassword = (email) =>
   request("/auth/forgot-password", {

@@ -106,7 +106,6 @@ const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // DEBUG LOG
     console.log("=================================");
     console.log("LOGIN REQUEST");
     console.log("Email:", email);
@@ -174,16 +173,17 @@ const login = async (req, res) => {
     const token = createToken(user._id.toString());
 
     // ==========================================
-    // SET COOKIE
+    // SET AUTH COOKIE
     // ==========================================
 
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      secure: true,
+      sameSite: "none",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
+    console.log("AUTH COOKIE SET");
     console.log("LOGIN SUCCESS");
     console.log("=================================");
 
@@ -221,8 +221,8 @@ const logout = async (req, res) => {
   try {
     res.clearCookie("token", {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      secure: true,
+      sameSite: "none",
     });
 
     return res.status(200).json({
